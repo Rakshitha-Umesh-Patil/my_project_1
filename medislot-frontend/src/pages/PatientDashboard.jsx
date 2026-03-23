@@ -11,6 +11,7 @@ function PatientDashboard() {
 
   const fetchAppointments = async () => {
     try {
+
       const token = localStorage.getItem("token");
 
       const res = await axios.get(
@@ -24,13 +25,14 @@ function PatientDashboard() {
 
       setAppointments(res.data);
 
-    } catch (error) {
-      console.log("Error fetching appointments", error);
+    } catch (err) {
+      console.error(err);
     }
   };
 
   const cancelAppointment = async (id) => {
     try {
+
       const token = localStorage.getItem("token");
 
       await axios.put(
@@ -43,11 +45,11 @@ function PatientDashboard() {
         }
       );
 
-      alert("Appointment cancelled");
+      alert("Cancelled successfully ❌");
       fetchAppointments();
 
-    } catch (error) {
-      console.log("Cancel error", error);
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -67,6 +69,7 @@ function PatientDashboard() {
               <th>Email</th>
               <th>Date</th>
               <th>Slot</th>
+              <th>Type</th>
               <th>Status</th>
               <th>Action</th>
             </tr>
@@ -78,29 +81,24 @@ function PatientDashboard() {
 
               <tr key={appt._id}>
 
-                <td>{appt.doctor?.name}</td>
-                <td>{appt.doctor?.email}</td>
-
-                <td>
-                  {new Date(appt.date).toLocaleDateString()}
-                </td>
-
+                <td>{appt.doctor?.name || "N/A"}</td>
+                <td>{appt.doctor?.email || "N/A"}</td>
+                <td>{new Date(appt.date).toLocaleDateString()}</td>
                 <td>{appt.slot}</td>
-
                 <td>
-                  <span
-                    className={
-                      appt.status === "cancelled"
-                        ? "text-danger"
-                        : "text-success"
-                    }
-                  >
-                    {appt.status}
-                  </span>
+                  {appt.type === "EMERGENCY"
+                    ? <span className="badge bg-danger">Emergency</span>
+                    : "Normal"}
+                </td>
+                <td>
+                  {appt.status === "pending" && <span className="text-warning">Pending</span>}
+                  {appt.status === "accepted" && <span className="text-success">Accepted</span>}
+                  {appt.status === "rejected" && <span className="text-danger">Rejected</span>}
+                  {appt.status === "cancelled" && <span className="text-muted">Cancelled</span>}
                 </td>
 
                 <td>
-                  {appt.status !== "cancelled" && (
+                  {appt.status === "pending" && (
                     <button
                       className="btn btn-danger btn-sm"
                       onClick={() => cancelAppointment(appt._id)}
