@@ -10,17 +10,35 @@ const doctorSchema = new mongoose.Schema({
     required: true,
     unique: true
   },
+  phone: {
+    type: String,
+    required: true
+  },
   specialization: {
     type: String,
     required: true
   },
   experience: {
-    type: Number
+    type: Number,
+    required: true
+  },
+  hospital: {
+    type: String,
+    required: true
+  },
+  password: {
+    type: String,
+    required: true
+  },
+  verified: {
+    type: Boolean,
+    default: false
   },
   availability: [
     {
-      day: String,          // Monday, Tuesday
-      slots: [String]       // "10:00-10:30"
+      day: String,
+      slots: [String],
+      note: String   
     }
   ],
   role: {

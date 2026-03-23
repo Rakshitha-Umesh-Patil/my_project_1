@@ -10,13 +10,11 @@ function PatientDashboard() {
   }, []);
 
   const fetchAppointments = async () => {
-
     try {
-
       const token = localStorage.getItem("token");
 
       const res = await axios.get(
-        "http://localhost:5000/appointments/my-appointments",
+        "http://localhost:5000/api/appointments/my-appointments",
         {
           headers: {
             Authorization: `Bearer ${token}`
@@ -29,17 +27,14 @@ function PatientDashboard() {
     } catch (error) {
       console.log("Error fetching appointments", error);
     }
-
   };
 
   const cancelAppointment = async (id) => {
-
     try {
-
       const token = localStorage.getItem("token");
 
       await axios.put(
-        `http://localhost:5000/appointments/cancel/${id}`,
+        `http://localhost:5000/api/appointments/cancel/${id}`,
         {},
         {
           headers: {
@@ -49,13 +44,11 @@ function PatientDashboard() {
       );
 
       alert("Appointment cancelled");
-
       fetchAppointments();
 
     } catch (error) {
       console.log("Cancel error", error);
     }
-
   };
 
   return (
@@ -63,49 +56,68 @@ function PatientDashboard() {
 
       <h2>My Appointments</h2>
 
-      <table className="table table-bordered">
+      {appointments.length === 0 ? (
+        <p>No appointments found</p>
+      ) : (
+        <table className="table table-bordered">
 
-        <thead>
-          <tr>
-            <th>Doctor</th>
-            <th>Email</th>
-            <th>Date</th>
-            <th>Slot</th>
-            <th>Status</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-
-        <tbody>
-
-          {appointments.map((appt) => (
-
-            <tr key={appt._id}>
-
-              <td>{appt.doctor?.name}</td>
-              <td>{appt.doctor?.email}</td>
-              <td>{appt.date}</td>
-              <td>{appt.slot}</td>
-              <td>{appt.status}</td>
-
-              <td>
-                {appt.status !== "cancelled" && (
-                  <button
-                    className="btn btn-danger btn-sm"
-                    onClick={() => cancelAppointment(appt._id)}
-                  >
-                    Cancel
-                  </button>
-                )}
-              </td>
-
+          <thead>
+            <tr>
+              <th>Doctor</th>
+              <th>Email</th>
+              <th>Date</th>
+              <th>Slot</th>
+              <th>Status</th>
+              <th>Action</th>
             </tr>
+          </thead>
 
-          ))}
+          <tbody>
 
-        </tbody>
+            {appointments.map((appt) => (
 
-      </table>
+              <tr key={appt._id}>
+
+                <td>{appt.doctor?.name}</td>
+                <td>{appt.doctor?.email}</td>
+
+                <td>
+                  {new Date(appt.date).toLocaleDateString()}
+                </td>
+
+                <td>{appt.slot}</td>
+
+                <td>
+                  <span
+                    className={
+                      appt.status === "cancelled"
+                        ? "text-danger"
+                        : "text-success"
+                    }
+                  >
+                    {appt.status}
+                  </span>
+                </td>
+
+                <td>
+                  {appt.status !== "cancelled" && (
+                    <button
+                      className="btn btn-danger btn-sm"
+                      onClick={() => cancelAppointment(appt._id)}
+                    >
+                      Cancel
+                    </button>
+                  )}
+                </td>
+
+              </tr>
+
+            ))}
+
+          </tbody>
+
+        </table>
+      )}
 
     </div>
   );

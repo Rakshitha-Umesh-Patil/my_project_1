@@ -1,19 +1,69 @@
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom";
 
 function Navbar() {
-  return (
-    <nav className="navbar navbar-dark bg-primary">
-      <div className="container">
-        <Link className="navbar-brand" to="/">MEDISLOT</Link>
+  const navigate = useNavigate();
+  const user = JSON.parse(localStorage.getItem("user"));
 
-        <div>
-          <Link className="btn btn-light me-2" to="/">Home</Link>
-          <Link className="btn btn-light me-2" to="/book">Book</Link>
-          <Link className="btn btn-light" to="/admin">Admin</Link>
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate("/login"); // ✅ safer than window.location.href
+  };
+
+  return (
+    <nav className="navbar navbar-dark bg-dark px-4">
+      <div className="container-fluid d-flex justify-content-between align-items-center">
+
+        {/* LEFT: LOGO */}
+        <h3 className="text-white m-0">MEDISLOT</h3>
+
+        {/* RIGHT: NAV LINKS */}
+        <div className="d-flex align-items-center">
+
+          <Link to="/" className="btn btn-light me-2">Home</Link>
+          <Link to="/book" className="btn btn-light me-2">Book</Link>
+
+          {/* ROLE BASED LINKS */}
+          {user?.role === "admin" && (
+            <Link to="/admin" className="btn btn-warning me-2">
+              Admin Panel
+            </Link>
+          )}
+
+          {user?.role === "doctor" && (
+            <Link to="/doctor-dashboard" className="btn btn-info me-2">
+              Doctor Panel
+            </Link>
+          )}
+
+          {user?.role === "user" && (
+            <Link to="/my-appointments" className="btn btn-success me-2">
+              My Appointments
+            </Link>
+          )}
+
+          {/* WELCOME TEXT */}
+          {user && (
+            <span className="text-white me-3">
+              Welcome, {user.name} 👋
+            </span>
+          )}
+
+          {/* AUTH BUTTONS */}
+          {!user ? (
+            <Link to="/login" className="btn btn-warning">
+              Login
+            </Link>
+          ) : (
+            <button className="btn btn-danger" onClick={handleLogout}>
+              Logout
+            </button>
+          )}
+
         </div>
       </div>
     </nav>
-  )
+  );
 }
 
-export default Navbar
+export default Navbar;

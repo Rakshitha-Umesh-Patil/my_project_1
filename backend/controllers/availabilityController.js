@@ -1,20 +1,28 @@
-const Availability = require("../models/availability");
+const Doctor = require("../models/Doctor");
 
 exports.addAvailability = async (req, res) => {
   try {
-    const { date, slots } = req.body;
+    const doctorId = req.user.id;
+    const { date, slots = [], note = "" } = req.body;
 
-    const availability = await Availability.create({
-      doctor: req.user._id,
-      date,
-      slots
-    });
+    if (!date) return res.status(400).json({ message: "Date is required" });
 
-    res.status(201).json({
-      message: "Availability added",
-      availability
-    });
+    const doctor = await Doctor.findById(doctorId);
+    if (!doctor) return res.status(404).json({ message: "Doctor not found" });
+
+    const existingDay = doctor.availability.find(d => new Date(d.day).toISOString().split('T')[0] === date);
+
+    if (existingDay) {
+      existingDay.slots = slots;
+      existingDay.note = note;
+    } else {
+      doctor.availability.push({ day: date, slots, note });
+    }
+
+    await doctor.save();
+    res.json({ message: "Availability set successfully ✅", availability: doctor.availability });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err);
+    res.status(500).json({ message: "Server error", error: err.message });
   }
 };

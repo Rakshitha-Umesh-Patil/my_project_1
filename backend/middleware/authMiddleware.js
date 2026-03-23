@@ -2,30 +2,31 @@ const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
 const authMiddleware = (roles = []) => {
-    return (req, res, next) => {
-        const token = req.headers['authorization']?.split(' ')[1];
+  return (req, res, next) => {
+    try {
+      const token = req.headers.authorization?.split(' ')[1];
 
-        if (!token) {
-            console.log("No token received");
-            return res.status(401).json({ message: "Unauthorized" });
-        }
+      if (!token) {
+        return res.status(401).json({ message: "No token provided" });
+      }
 
-        try {
-            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-            console.log("Decoded Role:", decoded.role); // 👈 ADD THIS
+      console.log("Decoded user:", decoded); // ✅ CORRECT PLACE
 
-            if (roles.length && !roles.includes(decoded.role)) {
-                return res.status(403).json({ message: "Forbidden" });
-            }
+      req.user = decoded;
 
-            req.user = decoded;
-            next();
-        } catch (err) {
-            console.log("JWT Error:", err.message);
-            return res.status(401).json({ message: "Invalid token" });
-        }
-    };
+      // Role check
+      if (roles.length && !roles.includes(req.user.role)) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      next();
+
+    } catch (err) {
+      return res.status(401).json({ message: "Invalid token" });
+    }
+  };
 };
 
 module.exports = authMiddleware;

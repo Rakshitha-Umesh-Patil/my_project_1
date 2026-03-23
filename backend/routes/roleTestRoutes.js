@@ -1,30 +1,30 @@
 const express = require("express");
 const router = express.Router();
 
-const { protect, restrictTo } = require("../middleware/authMiddleware");
+const authMiddleware = require("../middleware/authMiddleware");
 
+// USER
 router.get(
   "/user",
-  protect,
-  restrictTo("user"),
+  authMiddleware(['user']),
   (req, res) => {
     res.json({ message: "User route working" });
   }
 );
 
+// ADMIN
 router.get(
   "/admin",
-  protect,
-  restrictTo("admin"),
+  authMiddleware(['admin']),
   (req, res) => {
     res.json({ message: "Admin route working" });
   }
 );
 
+// DOCTOR
 router.get(
   "/doctor",
-  protect,
-  restrictTo("doctor"),
+  authMiddleware(['doctor']),
   (req, res) => {
     res.json({ message: "Doctor route working" });
   }

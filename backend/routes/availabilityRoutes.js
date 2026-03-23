@@ -1,13 +1,12 @@
 const express = require("express");
 const router = express.Router();
-
 const { addAvailability } = require("../controllers/availabilityController");
-const { protect, restrictTo } = require("../middleware/authMiddleware");
+const authMiddleware = require("../middleware/authMiddleware");
 
+// Only doctor can set availability
 router.post(
   "/",
-  protect,
-  restrictTo("doctor"),
+  authMiddleware(['user']),
   addAvailability
 );
 
