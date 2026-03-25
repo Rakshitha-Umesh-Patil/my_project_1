@@ -12,8 +12,11 @@ function EditDoctor() {
     phone: "",
     specialization: "",
     experience: "",
-    hospital: ""
+    hospital: "",
+    patientsTreated: 0
   });
+
+  const token = localStorage.getItem("token");
 
   useEffect(() => {
     fetchDoctor();
@@ -21,11 +24,14 @@ function EditDoctor() {
 
   const fetchDoctor = async () => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/doctors`);
-      const found = res.data.find(d => d._id === id);
-      if (found) setDoctor(found);
-    } catch (error) {
-      console.error(error);
+      const res = await axios.get(
+        `http://localhost:5000/api/users/doctor/${id}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setDoctor(res.data);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to fetch doctor data ❌");
     }
   };
 
@@ -38,15 +44,14 @@ function EditDoctor() {
 
     try {
       await axios.put(
-        `http://localhost:5000/api/doctors/${id}`,
-        doctor
+        `http://localhost:5000/api/users/edit-doctor/${id}`,
+        doctor,
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-
       alert("Doctor updated successfully ✅");
       navigate("/admin");
-
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.error(err);
       alert("Update failed ❌");
     }
   };
@@ -56,12 +61,64 @@ function EditDoctor() {
       <h2>Edit Doctor</h2>
 
       <form onSubmit={handleUpdate}>
-        <input name="name" value={doctor.name} onChange={handleChange} className="form-control mb-2" required />
-        <input name="email" value={doctor.email} onChange={handleChange} className="form-control mb-2" required />
-        <input name="phone" value={doctor.phone} onChange={handleChange} className="form-control mb-2" required />
-        <input name="specialization" value={doctor.specialization} onChange={handleChange} className="form-control mb-2" required />
-        <input name="experience" value={doctor.experience} onChange={handleChange} className="form-control mb-2" required />
-        <input name="hospital" value={doctor.hospital} onChange={handleChange} className="form-control mb-2" required />
+        <input
+          name="name"
+          value={doctor.name}
+          onChange={handleChange}
+          className="form-control mb-2"
+          placeholder="Name"
+          required
+        />
+        <input
+          name="email"
+          value={doctor.email}
+          onChange={handleChange}
+          className="form-control mb-2"
+          placeholder="Email"
+          type="email"
+          required
+        />
+        <input
+          name="phone"
+          value={doctor.phone}
+          onChange={handleChange}
+          className="form-control mb-2"
+          placeholder="Phone"
+          required
+        />
+        <input
+          name="specialization"
+          value={doctor.specialization}
+          onChange={handleChange}
+          className="form-control mb-2"
+          placeholder="Specialization"
+          required
+        />
+        <input
+          name="experience"
+          value={doctor.experience}
+          onChange={handleChange}
+          className="form-control mb-2"
+          placeholder="Experience (years)"
+          type="number"
+          required
+        />
+        <input
+          name="hospital"
+          value={doctor.hospital}
+          onChange={handleChange}
+          className="form-control mb-2"
+          placeholder="Hospital"
+          required
+        />
+        <input
+          name="patientsTreated"
+          value={doctor.patientsTreated}
+          onChange={handleChange}
+          className="form-control mb-2"
+          placeholder="Patients Treated"
+          type="number"
+        />
 
         <button className="btn btn-primary">Update Doctor</button>
       </form>

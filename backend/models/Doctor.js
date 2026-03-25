@@ -44,7 +44,11 @@ const doctorSchema = new mongoose.Schema({
   role: {
     type: String,
     default: "doctor"
-  }
+  },
+  patientsTreated: {
+  type: Number,
+  default: 0
+}
 }, { timestamps: true });
 
 module.exports =

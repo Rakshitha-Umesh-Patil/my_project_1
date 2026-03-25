@@ -9,6 +9,7 @@ const userRoutes = require('./routes/userRoutes');
 const doctorRoutes = require('./routes/doctorRoutes');
 const authRoutes = require('./routes/authRoutes');
 const availabilityRoutes = require("./routes/availabilityRoutes");
+const adminRoutes = require('./routes/adminRoutes');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -22,6 +23,7 @@ app.use('/api/appointments', appointmentRoutes);
 app.use('/api/doctors', doctorRoutes);
 app.use('/api/auth', authRoutes);
 app.use("/api/doctors/availability", require("./routes/availabilityRoutes"));
+app.use('/api/admin', adminRoutes);
 // ✅ Test Routes
 app.get("/", (req, res) => {
   res.send("MEDISLOT backend is running 🚀");

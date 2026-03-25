@@ -11,15 +11,21 @@ function AddDoctor() {
   const [specialization, setSpecialization] = useState("");
   const [experience, setExperience] = useState("");
   const [hospital, setHospital] = useState("");
+  const [patientsTreated, setPatientsTreated] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const token = localStorage.getItem("token"); // ✅ REQUIRED
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      alert("Please login as admin");
+      return;
+    }
 
     try {
       await axios.post(
-        "http://localhost:5000/api/users/add-doctor", // ✅ FIXED API
+        "http://localhost:5000/api/users/add-doctor",
         {
           name,
           email,
@@ -27,11 +33,13 @@ function AddDoctor() {
           specialization,
           experience,
           hospital,
-          password: "123456" // default password
+          patientsTreated, // ✅ FIXED (you forgot this)
+          password: "123456",
+          role: "doctor"   // ✅ IMPORTANT
         },
         {
           headers: {
-            Authorization: `Bearer ${token}` // ✅ REQUIRED
+            Authorization: `Bearer ${token}`
           }
         }
       );
@@ -45,6 +53,7 @@ function AddDoctor() {
       setSpecialization("");
       setExperience("");
       setHospital("");
+      setPatientsTreated("");
 
       navigate("/admin");
 
@@ -108,6 +117,14 @@ function AddDoctor() {
           value={hospital}
           onChange={(e) => setHospital(e.target.value)}
           required
+        />
+
+        <input
+          className="form-control mb-2"
+          type="number"
+          placeholder="Patients Treated"
+          value={patientsTreated}
+          onChange={(e) => setPatientsTreated(e.target.value)}
         />
 
         <button type="submit" className="btn btn-primary">

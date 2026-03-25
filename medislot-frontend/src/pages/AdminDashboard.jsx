@@ -1,52 +1,71 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 function AdminDashboard() {
   const [doctors, setDoctors] = useState([]);
+  const [appointments, setAppointments] = useState([]);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("");
 
+  const token = localStorage.getItem("token");
+  const navigate = useNavigate();
+
   useEffect(() => {
     fetchDoctors();
+    fetchAppointments();
   }, []);
 
-  // Fetch doctors
   const fetchDoctors = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/doctors");
+      const res = await axios.get("http://localhost:5000/api/users/doctors", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       setDoctors(res.data);
-    } catch (error) {
-      console.error("Error fetching doctors:", error);
+    } catch (err) {
+      console.error(err);
     }
   };
 
-  // Delete doctor
-  const deleteDoctor = async (id) => {
+  const fetchAppointments = async () => {
     try {
-      await axios.delete(`http://localhost:5000/api/doctors/${id}`);
-      alert("Doctor deleted successfully");
-      fetchDoctors();
-    } catch (error) {
-      console.error("Error deleting doctor:", error);
+      const res = await axios.get("http://localhost:5000/api/users/appointments", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setAppointments(res.data);
+    } catch (err) {
+      console.error(err);
     }
   };
 
-  // ✅ FILTER LOGIC
+  const deleteDoctor = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this doctor?")) return;
+    try {
+      await axios.delete(`http://localhost:5000/api/users/delete-doctor/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      alert("Doctor deleted successfully ✅");
+      fetchDoctors();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to delete doctor ❌");
+    }
+  };
+
   const filteredDoctors = doctors
-    .filter((doc) =>
-      doc.name.toLowerCase().includes(search.toLowerCase())
-    )
-    .filter((doc) =>
-      doc.specialization.toLowerCase().includes(filter.toLowerCase())
-    );
+    .filter((doc) => doc.name.toLowerCase().includes(search.toLowerCase()))
+    .filter((doc) => doc.specialization?.toLowerCase().includes(filter.toLowerCase()));
 
   return (
     <div className="container mt-4">
       <h2>Admin Dashboard</h2>
 
-      <a href="/add-doctor" className="btn btn-success mb-3">
+      <button
+        className="btn btn-success mb-3"
+        onClick={() => navigate("/add-doctor")}
+      >
         Add Doctor
-      </a>
+      </button>
 
       {/* Search + Filter */}
       <div className="d-flex mb-3">
@@ -57,7 +76,6 @@ function AdminDashboard() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-
         <input
           type="text"
           placeholder="Filter by specialization..."
@@ -68,7 +86,6 @@ function AdminDashboard() {
       </div>
 
       <h3>Doctors List</h3>
-
       <table className="table table-bordered">
         <thead>
           <tr>
@@ -78,10 +95,10 @@ function AdminDashboard() {
             <th>Specialization</th>
             <th>Experience</th>
             <th>Hospital</th>
-            <th>Action</th> {/* ✅ Single column */}
+            <th>Patients Treated</th>
+            <th>Action</th>
           </tr>
         </thead>
-
         <tbody>
           {filteredDoctors.length > 0 ? (
             filteredDoctors.map((doc) => (
@@ -92,19 +109,14 @@ function AdminDashboard() {
                 <td>{doc.specialization}</td>
                 <td>{doc.experience}</td>
                 <td>{doc.hospital || "N/A"}</td>
-
+                <td>{doc.patientsTreated}</td>
                 <td>
-                  {/* Edit */}
                   <button
                     className="btn btn-warning btn-sm me-2"
-                    onClick={() =>
-                      (window.location.href = `/edit-doctor/${doc._id}`)
-                    }
+                    onClick={() => navigate(`/edit-doctor/${doc._id}`)}
                   >
                     Edit
                   </button>
-
-                  {/* Delete */}
                   <button
                     className="btn btn-danger btn-sm"
                     onClick={() => deleteDoctor(doc._id)}
@@ -116,8 +128,42 @@ function AdminDashboard() {
             ))
           ) : (
             <tr>
-              <td colSpan="7" className="text-center">
+              <td colSpan="8" className="text-center">
                 No doctors found
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+
+      <h3 className="mt-5">Appointments List</h3>
+      <table className="table table-bordered">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Slot</th>
+            <th>Type</th>
+            <th>Status</th>
+            <th>Doctor</th>
+            <th>Patient</th>
+          </tr>
+        </thead>
+        <tbody>
+          {appointments.length > 0 ? (
+            appointments.map((a) => (
+              <tr key={a._id}>
+                <td>{new Date(a.date).toLocaleDateString()}</td>
+                <td>{a.slot}</td>
+                <td>{a.type}</td>
+                <td>{a.status}</td>
+                <td>{a.doctor?.name}</td>
+                <td>{a.user?.name}</td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan="6" className="text-center">
+                No appointments found
               </td>
             </tr>
           )}

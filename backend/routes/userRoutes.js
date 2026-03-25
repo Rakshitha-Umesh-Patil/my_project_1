@@ -3,46 +3,16 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 
 const User = require('../models/User');
+const Appointment = require('../models/Appointment');
 const authMiddleware = require('../middleware/authMiddleware');
-
-
-// ================= REGISTER =================
-router.post('/register', async (req, res) => {
-  try {
-    const { name, email, password, role } = req.body;
-
-    const existingUser = await User.findOne({ email });
-    if (existingUser)
-      return res.status(400).json({ message: "User already exists" });
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const newUser = new User({
-      name,
-      email,
-      password: hashedPassword,
-      role: role || "user"
-    });
-
-    await newUser.save();
-
-    res.status(201).json({ message: "User registered successfully" });
-
-  } catch (err) {
-    res.status(500).json({ message: "Server error", error: err.message });
-  }
-});
-
 
 // ================= ADD DOCTOR (ADMIN) =================
 router.post('/add-doctor', authMiddleware(['admin']), async (req, res) => {
   try {
-    const { name, email, password, phone, specialization, experience, hospital } = req.body;
+    const { name, email, password, phone, specialization, experience, hospital, patientsTreated } = req.body;
 
     const existing = await User.findOne({ email });
-    if (existing) {
-      return res.status(400).json({ message: "Doctor already exists" });
-    }
+    if (existing) return res.status(400).json({ message: "Doctor already exists" });
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -50,30 +20,37 @@ router.post('/add-doctor', authMiddleware(['admin']), async (req, res) => {
       name,
       email,
       password: hashedPassword,
-      role: "doctor",   // ✅ IMPORTANT
+      role: "doctor",
       phone,
       specialization,
       experience,
-      hospital
+      hospital,
+      patientsTreated: patientsTreated || 0
     });
 
     await doctor.save();
-
     res.json({ message: "Doctor added successfully", doctor });
 
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: err.message });
   }
 });
 
-
-// ================= GET DOCTORS =================
-router.get('/doctors', async (req, res) => {
+// ================= GET DOCTORS (ADMIN) =================
+router.get('/doctors', authMiddleware(['admin']), async (req, res) => {
   try {
-    const doctors = await User.find({ role: "doctor" })
-      .select('_id name email specialization experience');
+    const { search } = req.query;
+    let query = { role: "doctor" };
 
+    if (search) {
+      query.$or = [
+        { hospital: { $regex: search, $options: "i" } },
+        { specialization: { $regex: search, $options: "i" } },
+        { name: { $regex: search, $options: "i" } }
+      ];
+    }
+
+    const doctors = await User.find(query);
     res.json(doctors);
 
   } catch (err) {
@@ -81,47 +58,61 @@ router.get('/doctors', async (req, res) => {
   }
 });
 
-
-// ================= SET AVAILABILITY =================
-router.post('/set-availability', authMiddleware(['doctor']), async (req, res) => {
+// ================= GET DOCTOR BY ID =================
+router.get('/doctor/:id', authMiddleware(['admin']), async (req, res) => {
   try {
-    const { date, slots } = req.body;
-
-    const doctor = await User.findById(req.user.id);
-
-    if (!doctor) {
-      return res.status(404).json({ message: "Doctor not found" });
-    }
-
-    if (!doctor.availability) doctor.availability = [];
-
-    doctor.availability.push({ date, slots });
-
-    await doctor.save();
-
-    res.json({
-      message: "Availability added successfully",
-      availability: doctor.availability
-    });
-
+    const doctor = await User.findById(req.params.id);
+    if (!doctor) return res.status(404).json({ message: "Doctor not found" });
+    res.json(doctor);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
-
-// ================= GET AVAILABILITY =================
-router.get('/availability/:doctorId', async (req, res) => {
+// ================= EDIT DOCTOR =================
+router.put('/edit-doctor/:id', authMiddleware(['admin']), async (req, res) => {
   try {
-    const doctor = await User.findById(req.params.doctorId)
-      .select('name availability');
+    const { name, email, phone, specialization, experience, hospital, patientsTreated } = req.body;
+    const doctor = await User.findById(req.params.id);
+    if (!doctor) return res.status(404).json({ message: "Doctor not found" });
 
-    if (!doctor) {
-      return res.status(404).json({ message: "Doctor not found" });
-    }
+    doctor.name = name || doctor.name;
+    doctor.email = email || doctor.email;
+    doctor.phone = phone || doctor.phone;
+    doctor.specialization = specialization || doctor.specialization;
+    doctor.experience = experience || doctor.experience;
+    doctor.hospital = hospital || doctor.hospital;
+    doctor.patientsTreated = patientsTreated ?? doctor.patientsTreated;
 
-    res.json(doctor);
+    await doctor.save();
+    res.json({ message: "Doctor updated successfully", doctor });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
 
+// ================= DELETE DOCTOR =================
+router.delete('/delete-doctor/:id', authMiddleware(['admin']), async (req, res) => {
+  try {
+    const doctor = await User.findById(req.params.id);
+    if (!doctor) return res.status(404).json({ message: "Doctor not found" });
+
+    await doctor.remove();
+    res.json({ message: "Doctor deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// ================= GET ALL APPOINTMENTS (ADMIN) =================
+router.get('/appointments', authMiddleware(['admin']), async (req, res) => {
+  try {
+    const appointments = await Appointment.find()
+      .populate('doctor', 'name email')
+      .populate('user', 'name email')
+      .sort({ date: -1 });
+
+    res.json(appointments);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
