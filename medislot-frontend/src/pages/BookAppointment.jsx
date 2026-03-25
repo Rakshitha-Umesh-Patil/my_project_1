@@ -1,13 +1,25 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
-function Book() {
+function BookAppointment() {
   const [doctors, setDoctors] = useState([]);
   const [selectedDoctor, setSelectedDoctor] = useState(null);
   const [date, setDate] = useState("");
   const [slot, setSlot] = useState("");
   const [availableSlots, setAvailableSlots] = useState([]);
   const [type, setType] = useState("NORMAL");
+
+  const navigate = useNavigate();
+
+  // 🔐 LOGIN CHECK
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("Please login first");
+      navigate("/login");
+    }
+  }, []);
 
   useEffect(() => {
     fetchDoctors();
@@ -26,7 +38,7 @@ function Book() {
 
   const fetchDoctors = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/users/doctors"); // ✅ FIXED
+      const res = await axios.get("http://localhost:5000/api/users/doctors");
       setDoctors(res.data);
     } catch (err) {
       console.error(err);
@@ -35,6 +47,11 @@ function Book() {
 
   const handleBook = async () => {
     const token = localStorage.getItem("token");
+
+    if (!token) {
+      alert("Please login first");
+      return;
+    }
 
     if (!date || !slot || !selectedDoctor) {
       return alert("Fill all fields");
@@ -65,10 +82,13 @@ function Book() {
 
       <div className="row">
         {doctors.map(doc => (
-          <div className="col-md-4" key={doc._id}>
+          <div className="col-md-4 mb-3" key={doc._id}>
             <div className="card p-3">
               <h5>{doc.name}</h5>
-              <button className="btn btn-success" onClick={() => setSelectedDoctor(doc)}>
+              <button
+                className="btn btn-success"
+                onClick={() => setSelectedDoctor(doc)}
+              >
                 Book
               </button>
             </div>
@@ -80,16 +100,29 @@ function Book() {
         <div className="card p-3 mt-3">
           <h4>{selectedDoctor.name}</h4>
 
-          <input type="date" className="form-control mb-2" value={date} onChange={e => setDate(e.target.value)} />
+          <input
+            type="date"
+            className="form-control mb-2"
+            value={date}
+            onChange={e => setDate(e.target.value)}
+          />
 
-          <select className="form-control mb-2" value={slot} onChange={e => setSlot(e.target.value)}>
-            <option>Select Slot</option>
+          <select
+            className="form-control mb-2"
+            value={slot}
+            onChange={e => setSlot(e.target.value)}
+          >
+            <option value="">Select Slot</option>
             {availableSlots.map(s => (
-              <option key={s}>{s}</option>
+              <option key={s} value={s}>{s}</option>
             ))}
           </select>
 
-          <select className="form-control mb-2" value={type} onChange={e => setType(e.target.value)}>
+          <select
+            className="form-control mb-2"
+            value={type}
+            onChange={e => setType(e.target.value)}
+          >
             <option value="NORMAL">NORMAL</option>
             <option value="EMERGENCY">EMERGENCY</option>
           </select>
@@ -103,4 +136,4 @@ function Book() {
   );
 }
 
-export default Book;
+export default BookAppointment;

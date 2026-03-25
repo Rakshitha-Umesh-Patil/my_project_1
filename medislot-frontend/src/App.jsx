@@ -1,32 +1,43 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom"
-import Navbar from "./components/Navbar"
-import Home from "./pages/Home"
-import BookAppointment from "./pages/BookAppointment"
-import AdminDashboard from "./pages/AdminDashboard"
-import DoctorList from "./pages/DoctorList";
-import PatientDashboard from "./pages/PatientDashboard";
+import React from "react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+
+import Navbar from "./components/Navbar";
+
+// Pages
+import Home from "./pages/Home";
+import Login from "./pages/Login";
+import BookAppointment from "./pages/BookAppointment";
 import DoctorDashboard from "./pages/DoctorDashboard";
+import AdminDashboard from "./pages/AdminDashboard";
 import AddDoctor from "./pages/AddDoctor";
 import EditDoctor from "./pages/EditDoctor";
-import Login from "./pages/Login";
+import DoctorList from "./pages/DoctorList";
+import PatientDashboard from "./pages/PatientDashboard";
+
+// Optional (if you want protection)
 import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
   return (
     <BrowserRouter>
-
       <Navbar />
 
       <Routes>
 
-        {/* PUBLIC */}
+        {/* Public Routes */}
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
 
-        {/* ✅ FIXED HERE */}
-        <Route path="/book" element={<BookAppointment />} />
+        {/* User Routes */}
+        <Route
+          path="/book"
+          element={
+            <ProtectedRoute role="user">
+              <BookAppointment />
+            </ProtectedRoute>
+          }
+        />
 
-        {/* USER */}
         <Route
           path="/my-appointments"
           element={
@@ -36,7 +47,7 @@ function App() {
           }
         />
 
-        {/* DOCTOR */}
+        {/* Doctor Routes */}
         <Route
           path="/doctor-dashboard"
           element={
@@ -46,7 +57,7 @@ function App() {
           }
         />
 
-        {/* ADMIN */}
+        {/* Admin Routes */}
         <Route
           path="/admin"
           element={
@@ -74,13 +85,18 @@ function App() {
           }
         />
 
-        {/* OPTIONAL */}
-        <Route path="/doctors" element={<DoctorList />} />
+        <Route
+          path="/doctor-list"
+          element={
+            <ProtectedRoute role="admin">
+              <DoctorList />
+            </ProtectedRoute>
+          }
+        />
 
       </Routes>
-
     </BrowserRouter>
-  )
+  );
 }
 
-export default App
+export default App;

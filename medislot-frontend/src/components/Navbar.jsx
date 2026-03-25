@@ -7,23 +7,20 @@ function Navbar() {
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    navigate("/login"); // ✅ safer than window.location.href
+    navigate("/login");
   };
 
   return (
     <nav className="navbar navbar-dark bg-dark px-4">
       <div className="container-fluid d-flex justify-content-between align-items-center">
 
-        {/* LEFT: LOGO */}
         <h3 className="text-white m-0">MEDISLOT</h3>
 
-        {/* RIGHT: NAV LINKS */}
         <div className="d-flex align-items-center">
 
           <Link to="/" className="btn btn-light me-2">Home</Link>
           <Link to="/book" className="btn btn-light me-2">Book</Link>
 
-          {/* ROLE BASED LINKS */}
           {user?.role === "admin" && (
             <Link to="/admin" className="btn btn-warning me-2">
               Admin Panel
@@ -42,14 +39,12 @@ function Navbar() {
             </Link>
           )}
 
-          {/* WELCOME TEXT */}
           {user && (
             <span className="text-white me-3">
               Welcome, {user.name} 👋
             </span>
           )}
 
-          {/* AUTH BUTTONS */}
           {!user ? (
             <Link to="/login" className="btn btn-warning">
               Login

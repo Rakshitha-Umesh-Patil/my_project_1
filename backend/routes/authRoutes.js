@@ -1,12 +1,13 @@
 const express = require('express');
-const router = express.Router();   // ✅ IMPORTANT
+const router = express.Router();
 
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
 const User = require('../models/User');
-const Doctor = require('../models/Doctor'); // ✅ for doctor collection
+// ❌ REMOVE Doctor import
+
 
 // ================= REGISTER =================
 router.post('/register', async (req, res) => {
@@ -51,22 +52,14 @@ router.post('/login', async (req, res) => {
     if (!isMatch)
       return res.status(400).json({ message: "Invalid credentials" });
 
-    let doctorId = null;
-
-    // ✅ If doctor → find in doctors collection
-    if (user.role === "doctor") {
-      const doctor = await Doctor.findOne({ email: user.email });
-      if (doctor) doctorId = doctor._id;
-    }
-
+    // ✅ CLEAN JWT (ONLY id + role)
     const token = jwt.sign(
       {
         id: user._id,
-        role: user.role,
-        doctorId: doctorId   // 🔥 KEY FIX
+        role: user.role
       },
       process.env.JWT_SECRET,
-      { expiresIn: '1h' }
+      { expiresIn: '1d' }
     );
 
     res.json({

@@ -3,12 +3,12 @@ const mongoose = require('mongoose');
 const appointmentSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',   // user collection stays same
+    ref: 'User',
     required: true
   },
   doctor: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Doctor', // changed to Doctor collection
+    ref: 'User',   // ✅ FIXED
     required: true
   },
   date: {
@@ -30,7 +30,7 @@ const appointmentSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['pending', 'confirmed', 'completed', 'cancelled'],
+    enum: ['pending', 'accepted', 'rejected', 'completed'], // ✅ FIXED
     default: 'pending'
   }
 }, { timestamps: true });

@@ -3,7 +3,6 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 
 const User = require('../models/User');
-const Doctor = require('../models/Doctor'); // 🔥 IMPORTANT
 const authMiddleware = require('../middleware/authMiddleware');
 
 
@@ -35,11 +34,44 @@ router.post('/register', async (req, res) => {
 });
 
 
+// ================= ADD DOCTOR (ADMIN) =================
+router.post('/add-doctor', authMiddleware(['admin']), async (req, res) => {
+  try {
+    const { name, email, password, phone, specialization, experience, hospital } = req.body;
+
+    const existing = await User.findOne({ email });
+    if (existing) {
+      return res.status(400).json({ message: "Doctor already exists" });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const doctor = new User({
+      name,
+      email,
+      password: hashedPassword,
+      role: "doctor",   // ✅ IMPORTANT
+      phone,
+      specialization,
+      experience,
+      hospital
+    });
+
+    await doctor.save();
+
+    res.json({ message: "Doctor added successfully", doctor });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+
 // ================= GET DOCTORS =================
-// ⚠️ Now fetch from DOCTORS collection (not users)
 router.get('/doctors', async (req, res) => {
   try {
-    const doctors = await Doctor.find()
+    const doctors = await User.find({ role: "doctor" })
       .select('_id name email specialization experience');
 
     res.json(doctors);
@@ -55,14 +87,13 @@ router.post('/set-availability', authMiddleware(['doctor']), async (req, res) =>
   try {
     const { date, slots } = req.body;
 
-    console.log("JWT Data:", req.user);
-
-    // ✅ USE doctorId from JWT
-    const doctor = await Doctor.findById(req.user.doctorId);
+    const doctor = await User.findById(req.user.id);
 
     if (!doctor) {
       return res.status(404).json({ message: "Doctor not found" });
     }
+
+    if (!doctor.availability) doctor.availability = [];
 
     doctor.availability.push({ date, slots });
 
@@ -82,7 +113,7 @@ router.post('/set-availability', authMiddleware(['doctor']), async (req, res) =>
 // ================= GET AVAILABILITY =================
 router.get('/availability/:doctorId', async (req, res) => {
   try {
-    const doctor = await Doctor.findById(req.params.doctorId)
+    const doctor = await User.findById(req.params.doctorId)
       .select('name availability');
 
     if (!doctor) {
@@ -95,6 +126,5 @@ router.get('/availability/:doctorId', async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 });
-
 
 module.exports = router;

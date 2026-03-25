@@ -12,9 +12,13 @@ const authMiddleware = (roles = []) => {
 
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-      console.log("Decoded user:", decoded); // ✅ CORRECT PLACE
+      // ✅ CLEAN USER OBJECT
+      req.user = {
+        id: decoded.id,
+        role: decoded.role
+      };
 
-      req.user = decoded;
+      console.log("Decoded user:", req.user);
 
       // Role check
       if (roles.length && !roles.includes(req.user.role)) {
