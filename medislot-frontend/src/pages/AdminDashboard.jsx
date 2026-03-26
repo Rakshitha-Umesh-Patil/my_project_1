@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { BACKEND_URL } from "./config";
+import { BACKEND_URL } from "../config";
 
 
 function AdminDashboard() {
