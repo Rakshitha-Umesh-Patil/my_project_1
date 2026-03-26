@@ -25,7 +25,7 @@ function AddDoctor() {
 
     try {
       await axios.post(
-        "http://localhost:5000/api/users/add-doctor",
+        `${BACKEND_URL}/api/users/add-doctor`,
         {
           name,
           email,

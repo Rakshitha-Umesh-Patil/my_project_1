@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { BACKEND_URL } from "./config";
 
 function PatientDashboard() {
   const [appointments, setAppointments] = useState([]);
@@ -13,7 +14,7 @@ function PatientDashboard() {
       const token = localStorage.getItem("token");
 
       const res = await axios.get(
-        "http://localhost:5000/api/appointments/my-appointments",
+        `${BACKEND_URL}/api/appointments/my-appointments`,
         {
           headers: { Authorization: `Bearer ${token}` }
         }
@@ -34,7 +35,7 @@ function PatientDashboard() {
       const token = localStorage.getItem("token");
 
       await axios.put(
-        `http://localhost:5000/api/appointments/cancel/${id}`,
+        `${BACKEND_URL}/api/appointments/cancel/${id}`,
         {},
         {
           headers: { Authorization: `Bearer ${token}` }

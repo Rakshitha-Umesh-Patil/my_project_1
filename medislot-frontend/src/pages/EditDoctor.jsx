@@ -25,7 +25,7 @@ function EditDoctor() {
   const fetchDoctor = async () => {
     try {
       const res = await axios.get(
-        `http://localhost:5000/api/users/doctor/${id}`,
+        `${BACKEND_URL}/api/users/doctor/${id}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setDoctor(res.data);
@@ -44,7 +44,7 @@ function EditDoctor() {
 
     try {
       await axios.put(
-        `http://localhost:5000/api/users/edit-doctor/${id}`,
+       `${BACKEND_URL}/api/users/edit-doctor/${id}`,
         doctor,
         { headers: { Authorization: `Bearer ${token}` } }
       );

@@ -14,7 +14,7 @@ function DoctorList() {
   const fetchDoctors = async () => {
     try {
 
-      const res = await axios.get("http://localhost:5000/doctors");
+      const res = await axios.get(`${BACKEND_URL}/doctors`);
 
       setDoctors(res.data);
 

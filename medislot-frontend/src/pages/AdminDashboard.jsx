@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { BACKEND_URL } from "./config";
+
 
 function AdminDashboard() {
   const [doctors, setDoctors] = useState([]);
@@ -18,7 +20,7 @@ function AdminDashboard() {
 
   const fetchDoctors = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/users/doctors", {
+      const res = await axios.get(`${BACKEND_URL}/api/users/doctors`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setDoctors(res.data);
@@ -29,7 +31,7 @@ function AdminDashboard() {
 
   const fetchAppointments = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/users/appointments", {
+      const res = await axios.get(`${BACKEND_URL}/api/users/appointments`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setAppointments(res.data);
@@ -41,7 +43,7 @@ function AdminDashboard() {
   const deleteDoctor = async (id) => {
     if (!window.confirm("Are you sure you want to delete this doctor?")) return;
     try {
-      await axios.delete(`http://localhost:5000/api/users/delete-doctor/${id}`, {
+      await axios.delete(`${BACKEND_URL}/api/users/delete-doctor/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       alert("Doctor deleted successfully ✅");
