@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { BACKEND_URL } from "./config";
-
+import { BACKEND_URL } from "../config";
 function PatientDashboard() {
   const [appointments, setAppointments] = useState([]);
 
