@@ -1,4 +1,3 @@
-// routes/adminRoutes.js
 const express = require("express");
 const router = express.Router();
 const auth = require("../middleware/authMiddleware");
@@ -19,14 +18,15 @@ router.get("/doctors", auth(["admin"]), async (req, res) => {
 });
 
 // ===============================
-// ✅ GET ALL APPOINTMENTS
+// ✅ GET ALL APPOINTMENTS (FIXED)
 // ===============================
 router.get("/appointments", auth(["admin"]), async (req, res) => {
   try {
     const appointments = await Appointment.find()
       .populate("doctor", "name email specialization")
-      .populate("patient", "name email phone")
+      .populate("user", "name email phone") // ✅ correct field
       .sort({ date: -1 });
+
     res.json(appointments);
   } catch (err) {
     console.error("Fetch Appointments Error:", err);
@@ -40,11 +40,13 @@ router.get("/appointments", auth(["admin"]), async (req, res) => {
 router.delete("/delete-doctor/:id", auth(["admin"]), async (req, res) => {
   try {
     const doctor = await User.findById(req.params.id);
+
     if (!doctor || doctor.role !== "doctor") {
       return res.status(404).json({ message: "Doctor not found" });
     }
 
-    await doctor.remove();
+    await doctor.deleteOne();
+
     res.json({ message: "Doctor deleted successfully" });
   } catch (err) {
     console.error("Delete Doctor Error:", err);

@@ -11,16 +11,14 @@ const userSchema = new mongoose.Schema({
   hospital: String,
   patientsTreated: { type: Number, default: 0 },
 
-  // ✅ CORRECT AVAILABILITY
+  // ✅ FINAL CORRECT AVAILABILITY MODEL
   availability: [
-  {
-    date: {
-      type: String
-    },
-    slots: [String]
-  }
-],
+    {
+      date: { type: String, required: true },   // STRING ONLY
+      slots: [{ type: String }]
+    }
+  ],
 
 }, { timestamps: true });
 
-module.exports = mongoose.models.User || mongoose.model('User', userSchema);
+module.exports = mongoose.model('User', userSchema);
