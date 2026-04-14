@@ -1,28 +1,67 @@
-const Doctor = require("../models/Doctor");
+const Availability = require("../models/Availability");
 
-exports.addAvailability = async (req, res) => {
+// ================= SET AVAILABILITY (DOCTOR) =================
+const addAvailability = async (req, res) => {
   try {
     const doctorId = req.user.id;
-    const { date, slots = [], note = "" } = req.body;
+    const { date, slots } = req.body;
 
-    if (!date) return res.status(400).json({ message: "Date is required" });
-
-    const doctor = await Doctor.findById(doctorId);
-    if (!doctor) return res.status(404).json({ message: "Doctor not found" });
-
-    const existingDay = doctor.availability.find(d => new Date(d.day).toISOString().split('T')[0] === date);
-
-    if (existingDay) {
-      existingDay.slots = slots;
-      existingDay.note = note;
-    } else {
-      doctor.availability.push({ day: date, slots, note });
+    if (!date || !slots || slots.length === 0) {
+      return res.status(400).json({ message: "Date and slots required" });
     }
 
-    await doctor.save();
-    res.json({ message: "Availability set successfully ✅", availability: doctor.availability });
+    // Convert slots into schema format
+    const formattedSlots = slots.map(s => ({
+      time: s,
+      isBooked: false
+    }));
+
+    // Check if date already exists
+    let availability = await Availability.findOne({ doctor: doctorId, date });
+
+    if (availability) {
+      availability.slots = formattedSlots;
+      await availability.save();
+    } else {
+      await Availability.create({
+        doctor: doctorId,
+        date,
+        slots: formattedSlots
+      });
+    }
+
+    res.json({ message: "Availability saved successfully ✅" });
+
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Server error", error: err.message });
+    res.status(500).json({ message: err.message });
   }
 };
+
+// ================= GET AVAILABILITY (USER) =================
+const getAvailability = async (req, res) => {
+  try {
+    const { doctorId, date } = req.params;
+
+    const availability = await Availability.findOne({
+      doctor: doctorId,
+      date
+    });
+
+    if (!availability) {
+      return res.json([]);
+    }
+
+    // Send only free slots
+    const freeSlots = availability.slots
+      .filter(s => !s.isBooked)
+      .map(s => s.time);
+
+    res.json(freeSlots);
+
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+module.exports = { addAvailability, getAvailability };

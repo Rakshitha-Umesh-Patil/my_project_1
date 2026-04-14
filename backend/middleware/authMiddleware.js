@@ -9,8 +9,8 @@ const authMiddleware = (roles = []) => {
 
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-      req.user = { id: decoded.id, role: decoded.role };
-
+      req.user = { _id: decoded.id, id: decoded.id, role: decoded.role };
+      
       if (roles.length && !roles.includes(req.user.role)) {
         return res.status(403).json({ message: "Access denied" });
       }

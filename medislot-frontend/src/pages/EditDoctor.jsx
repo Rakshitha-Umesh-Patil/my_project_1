@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
+import { BACKEND_URL } from "../config";
 
 function EditDoctor() {
   const { id } = useParams();
@@ -13,24 +14,32 @@ function EditDoctor() {
     specialization: "",
     experience: "",
     hospital: "",
-    patientsTreated: 0
+    patientsTreated: 0,
   });
 
-  const token = localStorage.getItem("token");
+  // ✅ Always read token inside functions (not top-level)
+  const getToken = () => localStorage.getItem("token");
 
+  // ✅ Fetch doctor when id is available
   useEffect(() => {
-    fetchDoctor();
-  }, []);
+    if (id) fetchDoctor();
+  }, [id]);
 
   const fetchDoctor = async () => {
     try {
       const res = await axios.get(
         `${BACKEND_URL}/api/users/doctor/${id}`,
-        { headers: { Authorization: `Bearer ${token}` } }
+        {
+          headers: {
+            Authorization: `Bearer ${getToken()}`,
+          },
+        }
       );
-      setDoctor(res.data);
+
+      // ✅ IMPORTANT: backend usually sends { doctor: {...} }
+      setDoctor(res.data.doctor || res.data);
     } catch (err) {
-      console.error(err);
+      console.error("Fetch error:", err.response?.data || err.message);
       alert("Failed to fetch doctor data ❌");
     }
   };
@@ -44,14 +53,19 @@ function EditDoctor() {
 
     try {
       await axios.put(
-       `${BACKEND_URL}/api/users/edit-doctor/${id}`,
+        `${BACKEND_URL}/api/users/edit-doctor/${id}`,
         doctor,
-        { headers: { Authorization: `Bearer ${token}` } }
+        {
+          headers: {
+            Authorization: `Bearer ${getToken()}`,
+          },
+        }
       );
+
       alert("Doctor updated successfully ✅");
       navigate("/admin");
     } catch (err) {
-      console.error(err);
+      console.error("Update error:", err.response?.data || err.message);
       alert("Update failed ❌");
     }
   };

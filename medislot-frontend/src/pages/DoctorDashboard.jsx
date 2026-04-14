@@ -1,68 +1,73 @@
-// DoctorDashboard.jsx
 import { useEffect, useState } from "react";
 import axios from "axios";
 import DoctorAvailability from "./DoctorAvailability";
+import { BACKEND_URL } from "../config";
 
 function DoctorDashboard() {
   const [appointments, setAppointments] = useState([]);
   const [tab, setTab] = useState("appointments");
   const [loading, setLoading] = useState(false);
 
-  // Fetch appointments when tab is active
+  const token = localStorage.getItem("token");
+
   useEffect(() => {
-    if (tab === "appointments") fetchAppointments();
+    if (token && tab === "appointments") {
+      fetchAppointments();
+    }
   }, [tab]);
 
   const fetchAppointments = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem("token");
 
       const res = await axios.get(
-        "http://localhost:5000/api/appointments/doctor-appointments",
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        `${BACKEND_URL}/api/appointments/doctor-appointments`,
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      setAppointments(res.data);
-      setLoading(false);
+      setAppointments(res.data || []);
     } catch (err) {
       console.error("Fetch error:", err);
+      alert("Failed to load appointments");
+    } finally {
       setLoading(false);
     }
   };
 
   const updateStatus = async (id, status) => {
     try {
-      const token = localStorage.getItem("token");
-
       await axios.put(
-        `http://localhost:5000/api/appointments/update-status/${id}`,
+        `${BACKEND_URL}/api/appointments/update-status/${id}`,
         { status },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      // Refresh list after update
-      fetchAppointments();
+      // instant UI update
+      setAppointments((prev) =>
+        prev.map((a) =>
+          a._id === id ? { ...a, status } : a
+        )
+      );
     } catch (err) {
       console.error("Update status error:", err);
+      alert("Status update failed");
     }
   };
 
   const renderStatusBadge = (status) => {
-    switch (status) {
-      case "pending":
-        return <span className="badge bg-warning text-dark">Pending</span>;
-      case "accepted":
-        return <span className="badge bg-success">Accepted</span>;
-      case "rejected":
-        return <span className="badge bg-danger">Rejected</span>;
-      case "completed":
-        return <span className="badge bg-primary">Completed</span>;
-      default:
-        return <span className="badge bg-secondary">{status}</span>;
-    }
+    const s = status?.toLowerCase();
+    const map = {
+      pending: "warning",
+      accepted: "success",
+      rejected: "danger",
+      completed: "primary",
+      cancelled: "secondary",
+    };
+    return (
+      <span className={`badge bg-${map[s] || "dark"}`}>
+        {s}
+      </span>
+    );
   };
 
   return (
@@ -72,14 +77,18 @@ function DoctorDashboard() {
       <div className="mb-3">
         <button
           onClick={() => setTab("appointments")}
-          className={`btn me-2 ${tab === "appointments" ? "btn-primary" : "btn-outline-primary"}`}
+          className={`btn me-2 ${
+            tab === "appointments" ? "btn-primary" : "btn-outline-primary"
+          }`}
         >
           Appointments
         </button>
 
         <button
           onClick={() => setTab("availability")}
-          className={`btn ${tab === "availability" ? "btn-primary" : "btn-outline-primary"}`}
+          className={`btn ${
+            tab === "availability" ? "btn-primary" : "btn-outline-primary"
+          }`}
         >
           Set Availability
         </button>
@@ -103,49 +112,70 @@ function DoctorDashboard() {
                   <th>Action</th>
                 </tr>
               </thead>
-
               <tbody>
-                {appointments.map((a) => (
-                  <tr key={a._id}>
-                    <td>{a.user?.name || "N/A"}</td>
-                    <td>{new Date(a.date).toLocaleDateString()}</td>
-                    <td>{a.slot}</td>
-                    <td>
-                      {a.type === "EMERGENCY" ? (
-                        <span className="badge bg-danger">Emergency</span>
-                      ) : (
-                        <span className="badge bg-secondary">Normal</span>
-                      )}
-                    </td>
-                    <td>{renderStatusBadge(a.status)}</td>
-                    <td>
-                      {a.status === "pending" && (
-                        <>
-                          <button
-                            onClick={() => updateStatus(a._id, "accepted")}
-                            className="btn btn-success btn-sm me-2"
-                          >
-                            Accept
-                          </button>
-                          <button
-                            onClick={() => updateStatus(a._id, "rejected")}
-                            className="btn btn-danger btn-sm"
-                          >
-                            Reject
-                          </button>
-                        </>
-                      )}
-                      {a.status === "accepted" && (
-                        <button
-                          onClick={() => updateStatus(a._id, "completed")}
-                          className="btn btn-primary btn-sm"
+                {appointments.map((appt) => {
+                  const status = appt.status?.toLowerCase();
+
+                  return (
+                    <tr key={appt._id}>
+                      <td>{appt.user?.name || "N/A"}</td>
+                      <td>{new Date(appt.date).toLocaleDateString()}</td>
+                      <td>{appt.slot}</td>
+
+                      <td>
+                        <span
+                          className={`badge ${
+                            appt.type === "EMERGENCY"
+                              ? "bg-danger"
+                              : "bg-secondary"
+                          }`}
                         >
-                          Complete
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                          {appt.type}
+                        </span>
+                      </td>
+
+                      <td>{renderStatusBadge(appt.status)}</td>
+
+                      <td>
+                        {status === "pending" && (
+                          <>
+                            <button
+                              onClick={() =>
+                                updateStatus(appt._id, "accepted")
+                              }
+                              className="btn btn-success btn-sm me-2"
+                            >
+                              Accept
+                            </button>
+                            <button
+                              onClick={() =>
+                                updateStatus(appt._id, "rejected")
+                              }
+                              className="btn btn-danger btn-sm"
+                            >
+                              Reject
+                            </button>
+                          </>
+                        )}
+
+                        {status === "accepted" && (
+                          <button
+                            onClick={() =>
+                              updateStatus(appt._id, "completed")
+                            }
+                            className="btn btn-primary btn-sm"
+                          >
+                            Complete
+                          </button>
+                        )}
+
+                        {!["pending", "accepted"].includes(status) && (
+                          <span className="text-muted">—</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           )}

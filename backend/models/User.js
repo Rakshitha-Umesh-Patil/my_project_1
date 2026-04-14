@@ -10,13 +10,17 @@ const userSchema = new mongoose.Schema({
   experience: Number,
   hospital: String,
   patientsTreated: { type: Number, default: 0 },
+
+  // ✅ CORRECT AVAILABILITY
   availability: [
-    {
-      date: String,
-      slots: [String],
-      note: String
-    }
-  ]
+  {
+    date: {
+      type: String
+    },
+    slots: [String]
+  }
+],
+
 }, { timestamps: true });
 
 module.exports = mongoose.models.User || mongoose.model('User', userSchema);

@@ -3,7 +3,6 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { BACKEND_URL } from "../config";
 
-
 function AdminDashboard() {
   const [doctors, setDoctors] = useState([]);
   const [appointments, setAppointments] = useState([]);
@@ -20,7 +19,7 @@ function AdminDashboard() {
 
   const fetchDoctors = async () => {
     try {
-      const res = await axios.get(`${BACKEND_URL}/api/users/doctors`, {
+      const res = await axios.get(`${BACKEND_URL}/api/admin/doctors`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setDoctors(res.data);
@@ -31,7 +30,7 @@ function AdminDashboard() {
 
   const fetchAppointments = async () => {
     try {
-      const res = await axios.get(`${BACKEND_URL}/api/users/appointments`, {
+      const res = await axios.get(`${BACKEND_URL}/api/admin/appointments`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setAppointments(res.data);
@@ -43,7 +42,7 @@ function AdminDashboard() {
   const deleteDoctor = async (id) => {
     if (!window.confirm("Are you sure you want to delete this doctor?")) return;
     try {
-      await axios.delete(`${BACKEND_URL}/api/users/delete-doctor/${id}`, {
+      await axios.delete(`${BACKEND_URL}/api/admin/delete-doctor/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       alert("Doctor deleted successfully ✅");
@@ -155,11 +154,11 @@ function AdminDashboard() {
             appointments.map((a) => (
               <tr key={a._id}>
                 <td>{new Date(a.date).toLocaleDateString()}</td>
-                <td>{a.slot}</td>
+                <td>{a.timeSlot}</td> {/* ✅ correct field */}
                 <td>{a.type}</td>
                 <td>{a.status}</td>
                 <td>{a.doctor?.name}</td>
-                <td>{a.user?.name}</td>
+                <td>{a.patient?.name}</td> {/* ✅ correct field */}
               </tr>
             ))
           ) : (

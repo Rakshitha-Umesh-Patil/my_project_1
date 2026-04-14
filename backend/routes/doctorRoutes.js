@@ -1,39 +1,19 @@
 const express = require("express");
 const router = express.Router();
-const doctorController = require("../controllers/doctorController");
-const authMiddleware = require("../middleware/authMiddleware");
+const User = require("../models/User");
+const auth = require("../middleware/authMiddleware");
 
-// Admin adds doctor
-router.post("/add", authMiddleware(['admin']), doctorController.addDoctor);
-
-// Get all doctors (anyone can view)
-router.get("/", doctorController.getDoctors);
-
-// Update doctor
-router.put("/:id", authMiddleware(['admin']), doctorController.updateDoctor);
-
-// Delete doctor
-router.delete("/:id", authMiddleware(['admin']), doctorController.deleteDoctor);
-
-// Doctor sets availability
-router.post(
-  "/availability",
-  authMiddleware(['doctor']),
-  doctorController.setAvailability
-);
-
-// Doctor view appointments
-router.get(
-  "/appointments",
-  authMiddleware(['doctor']),
-  doctorController.getDoctorAppointments
-);
-
-// Doctor accept/reject appointment
-router.put(
-  "/appointments/:appointmentId",
-  authMiddleware(['doctor']),
-  doctorController.updateAppointmentStatus
-);
+// Get all doctors (for patients to book appointments)
+router.get("/", auth(["user", "doctor", "admin"]), async (req, res) => {
+  try {
+    const doctors = await User.find({ role: "doctor" }).select(
+      "name email specialization availability"
+    );
+    res.json(doctors);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: err.message });
+  }
+});
 
 module.exports = router;

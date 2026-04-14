@@ -1,99 +1,83 @@
 const express = require('express');
 const router = express.Router();
-const mongoose = require('mongoose');
 
 const Appointment = require('../models/Appointment');
-const User = require('../models/User'); // ✅ single source of truth
-const authMiddleware = require('../middleware/authMiddleware');
+const User = require('../models/User');
+const auth = require("../middleware/authMiddleware");
 
 
 // ===============================
-// Create booking (User)
-router.post('/book', authMiddleware(['user']), async (req, res) => {
-  const { doctorId, date, slot, type } = req.body;
-
+// ✅ BOOK APPOINTMENT (USER)
+// ===============================
+router.post('/book', auth(['user']), async (req, res) => {
   try {
-    const doctor = await User.findById(doctorId);
+    const { doctorId, date, slot, type } = req.body;
 
-    if (!doctor) {
+    if (!doctorId || !date || !slot) {
+      return res.status(400).json({ message: "Missing fields" });
+    }
+
+    const doctor = await User.findById(doctorId);
+    if (!doctor || doctor.role !== 'doctor') {
       return res.status(404).json({ message: "Doctor not found" });
     }
 
-    // 🔥 CHECK SLOT EXISTS IN AVAILABILITY
-    const day = doctor.availability.find(d => d.date === date);
-
-    if (!day || !day.slots.includes(slot)) {
-      return res.status(400).json({ message: "Slot not available" });
-    }
-
-    // 🔥 DOUBLE BOOKING CHECK
-    const existing = await Appointment.findOne({
-      doctor: doctorId,
-      date,
-      slot
-    });
-
-    if (existing) {
-      return res.status(400).json({ message: "Slot already booked" });
-    }
-
-    const appointment = new Appointment({
+    const appointment = await Appointment.create({
       user: req.user.id,
       doctor: doctorId,
-      date,
+      date: new Date(date),
       slot,
-      type,
+      type: type || "NORMAL",
       status: "pending"
     });
 
-    await appointment.save();
-
-    // 🔥 REMOVE SLOT AFTER BOOKING
-    day.slots = day.slots.filter(s => s !== slot);
-
-    await doctor.save();
-
     res.json({ message: "Booked successfully", appointment });
+
+  } catch (err) {
+    // 🔥 Handle unique index error (double booking)
+    if (err.code === 11000) {
+      return res.status(400).json({ message: "Slot already booked" });
+    }
+    res.status(500).json({ message: err.message });
+  }
+});
+
+
+// ===============================
+// ✅ DOCTOR — VIEW APPOINTMENTS
+// ===============================
+router.get('/doctor-appointments', auth(['doctor']), async (req, res) => {
+  try {
+    const appointments = await Appointment.find({
+      doctor: req.user.id,
+      status: { $ne: "cancelled" }
+    })
+      .populate('user', 'name email phone')
+      .sort({ date: 1 });
+
+    res.json(appointments);
 
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
-// ===============================
-// Get appointments for doctor
-router.get('/doctor-appointments', authMiddleware(['doctor']), async (req, res) => {
-  try {
-    const appointments = await Appointment.find({
-      doctor: req.user.id,
-      status: { $ne: "cancelled" } // ✅ hide cancelled
-    })
-      .populate('user', 'name email phone')
-      .sort({ date: 1, priority: 1 });
-
-    res.json(appointments);
-
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error", error: err.message });
-  }
-});
 
 
 // ===============================
-// Update appointment status (doctor)
-router.put('/update-status/:id', authMiddleware(['doctor']), async (req, res) => {
-  const { status } = req.body;
-
-  const validStatus = ['pending', 'accepted', 'rejected', 'completed'];
-
-  if (!validStatus.includes(status)) {
-    return res.status(400).json({ message: "Invalid status" });
-  }
-
+// ✅ DOCTOR — UPDATE STATUS
+// ===============================
+router.put('/update-status/:id', auth(['doctor']), async (req, res) => {
   try {
+    const { status } = req.body;
+    const validStatus = ['accepted', 'rejected', 'completed'];
+
+    if (!validStatus.includes(status)) {
+      return res.status(400).json({ message: "Invalid status" });
+    }
+
     const appointment = await Appointment.findOne({
       _id: req.params.id,
-      doctor: req.user.id
+      doctor: req.user.id,
     });
 
     if (!appointment) {
@@ -103,62 +87,56 @@ router.put('/update-status/:id', authMiddleware(['doctor']), async (req, res) =>
     appointment.status = status;
     await appointment.save();
 
-    res.json({
-      message: "Status updated successfully",
-      appointment
-    });
+    res.json({ message: "Status updated", appointment });
 
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error", error: err.message });
+    res.status(500).json({ message: err.message });
   }
 });
 
 
 // ===============================
-// Cancel appointment (user)
-router.put('/cancel/:id', authMiddleware(['user']), async (req, res) => {
+// ✅ USER — CANCEL APPOINTMENT
+// ===============================
+router.put('/cancel/:id', auth(['user']), async (req, res) => {
   try {
     const appointment = await Appointment.findOne({
       _id: req.params.id,
-      user: req.user.id
+      user: req.user.id,
+      status: "pending"
     });
 
     if (!appointment) {
-      return res.status(404).json({ message: "Appointment not found" });
-    }
-
-    if (appointment.status === "cancelled") {
-      return res.status(400).json({ message: "Already cancelled" });
+      return res.status(404).json({ message: "Only pending appointments can be cancelled" });
     }
 
     appointment.status = "cancelled";
     await appointment.save();
 
-    res.json({ message: "Appointment cancelled successfully" });
+    res.json({ message: "Cancelled successfully" });
 
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: err.message });
   }
 });
 
 
 // ===============================
-// Get user's appointments
-router.get('/my-appointments', authMiddleware(['user']), async (req, res) => {
+// ✅ USER — MY APPOINTMENTS
+// ===============================
+router.get('/my-appointments', auth(['user']), async (req, res) => {
   try {
-    const appointments = await Appointment.find({ user: req.user.id })
-      .populate('doctor', 'name email')
+    const appointments = await Appointment.find({
+      user: req.user.id
+    })
+      .populate('doctor', 'name email specialization hospital')
       .sort({ date: -1 });
 
     res.json(appointments);
 
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error", error: err.message });
+    res.status(500).json({ message: err.message });
   }
 });
-
 
 module.exports = router;

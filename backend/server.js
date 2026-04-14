@@ -19,10 +19,11 @@ app.use(express.json());
 
 // ✅ Routes (CLEAN STRUCTURE)
 app.use('/api/users', userRoutes);         // register, login, doctors
+app.use("/api/doctors/availability", require("./routes/availabilityRoutes"));
+
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/doctors', doctorRoutes);
 app.use('/api/auth', authRoutes);
-app.use("/api/doctors/availability", require("./routes/availabilityRoutes"));
 app.use('/api/admin', adminRoutes);
 // ✅ Test Routes
 app.get("/", (req, res) => {
