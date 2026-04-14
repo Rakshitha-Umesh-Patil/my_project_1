@@ -17,7 +17,6 @@ function DoctorList() {
       const res = await axios.get(`${BACKEND_URL}/api/doctors`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-
       setDoctors(res.data || []);
     } catch (error) {
       console.log("Error fetching doctors", error);
@@ -26,23 +25,64 @@ function DoctorList() {
 
   return (
     <div className="container mt-4">
-      <h2>Available Doctors</h2>
+      <h2 className="text-center mb-4">Available Doctors</h2>
 
       <div className="row">
         {doctors.map((doc) => (
-          <div className="col-md-4" key={doc._id}>
-            <div className="card mb-3 shadow">
+          <div className="col-md-4 mb-4" key={doc._id}>
+            <div className="card shadow h-100 border-0">
               <div className="card-body">
-                <h5>{doc.name}</h5>
-                <p>Specialization: {doc.specialization}</p>
-                <p>Experience: {doc.experience} years</p>
+                <div className="text-center mb-3">
+                  <div
+                    style={{
+                      width: "80px",
+                      height: "80px",
+                      borderRadius: "50%",
+                      background: "#e9ecef",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: "28px",
+                      fontWeight: "bold",
+                      color: "#0d6efd",
+                    }}
+                  >
+                    {doc.name.charAt(0)}
+                  </div>
+                </div>
 
-                <button
-                  className="btn btn-success"
-                  onClick={() => navigate(`/book/${doc._id}`)}
-                >
-                  Book Appointment
-                </button>
+                <h5 className="text-center">{doc.name}</h5>
+                <hr />
+
+                <p className="mb-1">
+                  <strong>Specialization:</strong> {doc.specialization}
+                </p>
+                <p className="mb-1">
+                  <strong>Experience:</strong> {doc.experience} years
+                </p>
+                <p className="mb-1">
+                  <strong>Hospital:</strong> {doc.hospital || "N/A"}
+                </p>
+                <p className="mb-1">
+                  <strong>Phone:</strong> {doc.phone || "N/A"}
+                </p>
+                <p className="mb-3">
+                  <strong>Patients Treated:</strong>{" "}
+                  {doc.patientsTreated || 0}
+                </p>
+
+                <div className="d-grid">
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => navigate(`/book/${doc._id}`)}
+                  >
+                    Book Appointment
+                  </button>
+                </div>
+              </div>
+
+              <div className="card-footer text-center bg-light">
+                <small className="text-success">Available for Booking</small>
               </div>
             </div>
           </div>

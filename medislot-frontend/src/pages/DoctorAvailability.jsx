@@ -6,19 +6,15 @@ function DoctorAvailability() {
   const [date, setDate] = useState("");
   const [slots, setSlots] = useState([]);
 
-  // Generate slots 9AM–6PM (30 mins)
+  // 9AM–6PM slots
   const allSlots = [];
   for (let h = 9; h < 18; h++) {
-    allSlots.push(
-      `${h.toString().padStart(2, "0")}:00-${h
-        .toString()
-        .padStart(2, "0")}:30`
-    );
-    allSlots.push(
-      `${h.toString().padStart(2, "0")}:30-${(h + 1)
-        .toString()
-        .padStart(2, "0")}:00`
-    );
+    allSlots.push(`${h.toString().padStart(2, "0")}:00-${h
+      .toString()
+      .padStart(2, "0")}:30`);
+    allSlots.push(`${h.toString().padStart(2, "0")}:30-${(h + 1)
+      .toString()
+      .padStart(2, "0")}:00`);
   }
 
   const toggleSlot = (slot) => {
@@ -39,8 +35,8 @@ function DoctorAvailability() {
 
     try {
       const res = await axios.post(
-        // ✅ CORRECT ROUTE
-        `${BACKEND_URL}/api/availability/set-availability`,
+        // ✅ FIXED ROUTE
+        `${BACKEND_URL}/api/doctors/availability/set-availability`,
         { date, slots },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -48,8 +44,8 @@ function DoctorAvailability() {
       alert(res.data.message);
       setSlots([]);
     } catch (err) {
-      console.error(err.response?.data);
-      alert("Failed to save availability");
+      console.log(err.response?.data);
+      alert(err.response?.data?.message || "Failed to save availability");
     }
   };
 

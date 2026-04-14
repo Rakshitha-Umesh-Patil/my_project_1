@@ -18,44 +18,34 @@ function AdminDashboard() {
   }, []);
 
   const fetchDoctors = async () => {
-    try {
-      const res = await axios.get(`${BACKEND_URL}/api/admin/doctors`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setDoctors(res.data);
-    } catch (err) {
-      console.error(err);
-    }
+    const res = await axios.get(`${BACKEND_URL}/api/admin/doctors`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    setDoctors(res.data);
   };
 
   const fetchAppointments = async () => {
-    try {
-      const res = await axios.get(`${BACKEND_URL}/api/admin/appointments`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setAppointments(res.data);
-    } catch (err) {
-      console.error(err);
-    }
+    const res = await axios.get(`${BACKEND_URL}/api/admin/appointments`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    setAppointments(res.data);
   };
 
   const deleteDoctor = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this doctor?")) return;
-    try {
-      await axios.delete(`${BACKEND_URL}/api/admin/delete-doctor/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      alert("Doctor deleted successfully ✅");
-      fetchDoctors();
-    } catch (err) {
-      console.error(err);
-      alert("Failed to delete doctor ❌");
-    }
+    if (!window.confirm("Delete this doctor?")) return;
+
+    await axios.delete(`${BACKEND_URL}/api/admin/delete-doctor/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    fetchDoctors();
   };
 
   const filteredDoctors = doctors
     .filter((doc) => doc.name.toLowerCase().includes(search.toLowerCase()))
-    .filter((doc) => doc.specialization?.toLowerCase().includes(filter.toLowerCase()));
+    .filter((doc) =>
+      doc.specialization?.toLowerCase().includes(filter.toLowerCase())
+    );
 
   return (
     <div className="container mt-4">
@@ -86,6 +76,7 @@ function AdminDashboard() {
         />
       </div>
 
+      {/* ================= DOCTORS ================= */}
       <h3>Doctors List</h3>
       <table className="table table-bordered">
         <thead>
@@ -101,42 +92,35 @@ function AdminDashboard() {
           </tr>
         </thead>
         <tbody>
-          {filteredDoctors.length > 0 ? (
-            filteredDoctors.map((doc) => (
-              <tr key={doc._id}>
-                <td>{doc.name}</td>
-                <td>{doc.email}</td>
-                <td>{doc.phone || "N/A"}</td>
-                <td>{doc.specialization}</td>
-                <td>{doc.experience}</td>
-                <td>{doc.hospital || "N/A"}</td>
-                <td>{doc.patientsTreated}</td>
-                <td>
-                  <button
-                    className="btn btn-warning btn-sm me-2"
-                    onClick={() => navigate(`/edit-doctor/${doc._id}`)}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    className="btn btn-danger btn-sm"
-                    onClick={() => deleteDoctor(doc._id)}
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))
-          ) : (
-            <tr>
-              <td colSpan="8" className="text-center">
-                No doctors found
+          {filteredDoctors.map((doc) => (
+            <tr key={doc._id}>
+              <td>{doc.name}</td>
+              <td>{doc.email}</td>
+              <td>{doc.phone || "N/A"}</td>
+              <td>{doc.specialization}</td>
+              <td>{doc.experience}</td>
+              <td>{doc.hospital || "N/A"}</td>
+              <td>{doc.patientsTreated}</td>
+              <td>
+                <button
+                  className="btn btn-warning btn-sm me-2"
+                  onClick={() => navigate(`/edit-doctor/${doc._id}`)}
+                >
+                  Edit
+                </button>
+                <button
+                  className="btn btn-danger btn-sm"
+                  onClick={() => deleteDoctor(doc._id)}
+                >
+                  Delete
+                </button>
               </td>
             </tr>
-          )}
+          ))}
         </tbody>
       </table>
 
+      {/* ================= APPOINTMENTS ================= */}
       <h3 className="mt-5">Appointments List</h3>
       <table className="table table-bordered">
         <thead>
@@ -154,11 +138,11 @@ function AdminDashboard() {
             appointments.map((a) => (
               <tr key={a._id}>
                 <td>{new Date(a.date).toLocaleDateString()}</td>
-                <td>{a.timeSlot}</td> {/* ✅ correct field */}
+                <td>{a.slot}</td> {/* ✅ FIXED */}
                 <td>{a.type}</td>
                 <td>{a.status}</td>
                 <td>{a.doctor?.name}</td>
-                <td>{a.patient?.name}</td> {/* ✅ correct field */}
+                <td>{a.user?.name}</td> {/* ✅ FIXED */}
               </tr>
             ))
           ) : (

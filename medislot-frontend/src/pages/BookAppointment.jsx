@@ -9,13 +9,12 @@ function BookAppointment() {
   const [date, setDate] = useState("");
   const [slot, setSlot] = useState("");
   const [availableSlots, setAvailableSlots] = useState([]);
-  const [type, setType] = useState("NORMAL");
 
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
   const user = JSON.parse(localStorage.getItem("user") || "null");
 
-  // Only USER can access
+  // 🔐 Only USER can access
   useEffect(() => {
     if (!token || user?.role !== "user") {
       alert("Only users can book appointments");
@@ -23,7 +22,7 @@ function BookAppointment() {
     }
   }, []);
 
-  // Fetch doctors
+  // ✅ Fetch doctors
   useEffect(() => {
     axios
       .get(`${BACKEND_URL}/api/doctors`, {
@@ -33,7 +32,7 @@ function BookAppointment() {
       .catch(() => alert("Error loading doctors"));
   }, []);
 
-  // ✅ Fetch slots CORRECTLY
+  // ✅ Fetch slots whenever doctor/date changes
   useEffect(() => {
     if (selectedDoctor && date) {
       axios
@@ -43,6 +42,7 @@ function BookAppointment() {
         )
         .then((res) => {
           setAvailableSlots(res.data.slots || []);
+          setSlot("");
         })
         .catch(() => setAvailableSlots([]));
     }
@@ -55,14 +55,17 @@ function BookAppointment() {
         {
           doctorId: selectedDoctor._id,
           date,
-          slot,      // ✅ correct field
-          type,
+          slot,
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      alert("Booked Successfully ✅");
+      alert("Appointment Booked Successfully ✅");
+
+      setSelectedDoctor(null);
+      setDate("");
       setSlot("");
+      setAvailableSlots([]);
     } catch (err) {
       alert(err.response?.data?.message || "Booking failed");
     }
@@ -70,49 +73,64 @@ function BookAppointment() {
 
   return (
     <div className="container mt-4">
-      <h2>Book Appointment</h2>
+      <h2 className="text-center mb-4">Book Appointment</h2>
 
+      {/* Doctor Cards */}
       <div className="row">
         {doctors.map((doc) => (
-          <div className="col-md-4 mb-3" key={doc._id}>
-            <div className="card p-3 shadow">
-              <h5>{doc.name}</h5>
-              <p>{doc.specialization}</p>
-              <p>{doc.hospital}</p>
+          <div className="col-md-4 mb-4" key={doc._id}>
+            <div className="card shadow border-0 h-100">
+              <div className="card-body">
+                <h5 className="text-center">Dr. {doc.name}</h5>
+                <hr />
+                <p><strong>Specialization:</strong> {doc.specialization}</p>
+                <p><strong>Experience:</strong> {doc.experience} years</p>
+                <p><strong>Hospital:</strong> {doc.hospital || "N/A"}</p>
+                <p><strong>Phone:</strong> {doc.phone || "N/A"}</p>
+                <p><strong>Patients Treated:</strong> {doc.patientsTreated || 0}</p>
 
-              <button
-                className="btn btn-success"
-                onClick={() => {
-                  setSelectedDoctor(doc);
-                  setDate("");
-                  setSlot("");
-                  setAvailableSlots([]);
-                }}
-              >
-                Book
-              </button>
+                <div className="d-grid mt-3">
+                  <button
+                    className="btn btn-success"
+                    onClick={() => {
+                      setSelectedDoctor(doc);
+                      setDate("");
+                      setSlot("");
+                      setAvailableSlots([]);
+                    }}
+                  >
+                    Book Appointment
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         ))}
       </div>
 
+      {/* Booking Panel */}
       {selectedDoctor && (
-        <div className="card p-3 mt-3">
-          <h5>Booking with Dr. {selectedDoctor.name}</h5>
+        <div className="card shadow p-4 mt-4 border-0">
+          <h4 className="mb-3 text-center">
+            Booking with Dr. {selectedDoctor.name}
+          </h4>
 
+          <label>Select Date</label>
           <input
             type="date"
-            className="form-control mb-2"
+            className="form-control mb-3"
             value={date}
             onChange={(e) => setDate(e.target.value)}
           />
 
+          <label>Select Available Slot</label>
           <select
-            className="form-control mb-2"
+            className="form-control mb-3"
             value={slot}
             onChange={(e) => setSlot(e.target.value)}
+            disabled={!availableSlots.length}
           >
-            <option value="">Select Slot</option>
+            <option value="">Choose Slot</option>
             {availableSlots.map((s) => (
               <option key={s} value={s}>
                 {s}
@@ -120,13 +138,15 @@ function BookAppointment() {
             ))}
           </select>
 
-          <button
-            className="btn btn-primary"
-            disabled={!slot}
-            onClick={handleBook}
-          >
-            Confirm Booking
-          </button>
+          <div className="d-grid">
+            <button
+              className="btn btn-primary"
+              disabled={!slot}
+              onClick={handleBook}
+            >
+              Confirm Booking
+            </button>
+          </div>
         </div>
       )}
     </div>
